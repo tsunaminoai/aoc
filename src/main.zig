@@ -30,7 +30,9 @@ pub fn main() !void {
     }
     var elfList = try elves.toOwnedSlice();
     std.mem.sort(u32, elfList, {}, comptime std.sort.asc(u32));
-    for (elfList, 0..) |item, v| {
-        std.debug.print("Elf {}: {}\n", .{ v, item });
+    var total: u32 = 0;
+    for (elfList.len - 3 .. elfList.len) |i| {
+        total += elfList[i];
     }
+    std.debug.print("Total: {}\n", .{ total});
 }

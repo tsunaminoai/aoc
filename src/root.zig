@@ -27,10 +27,12 @@ pub fn calibrationValue(alloc: Allocator, input: []const u8) !u32 {
     var digits = std.ArrayList(u8).init(alloc);
     defer digits.deinit();
 
-    for (input) |c| {
+    for (input, 0..) |c, i| {
         if (std.ascii.isDigit(c)) {
             try digits.append(c);
         }
+        if (stringToInt(input[i..])) |d|
+            try digits.append(std.fmt.digitToChar(d, .lower));
     }
     if (digits.items.len == 0) {
         std.debug.print("No digits found in string \"{s}\"\n", .{input});
@@ -80,9 +82,48 @@ pub fn day1(writer: anytype) !void {
     try writer.print("sum: {}\n", .{sum});
 }
 
+pub fn stringToInt(input: []const u8) ?u8 {
+    const len = input.len;
+    if (len < 3)
+        return null;
+    if (std.mem.eql(u8, input[0..3], "one"))
+        return @intCast(1);
+    if (std.mem.eql(u8, input[0..3], "two"))
+        return @intCast(2);
+    if (std.mem.eql(u8, input[0..3], "six"))
+        return @intCast(6);
+    if (len < 4)
+        return null;
+    if (std.mem.eql(u8, input[0..4], "four"))
+        return @intCast(4);
+    if (std.mem.eql(u8, input[0..4], "five"))
+        return @intCast(5);
+    if (std.mem.eql(u8, input[0..4], "nine"))
+        return @intCast(9);
+    if (len < 5)
+        return null;
+    if (std.mem.eql(u8, input[0..5], "three"))
+        return @intCast(3);
+    if (std.mem.eql(u8, input[0..5], "seven"))
+        return @intCast(7);
+    if (std.mem.eql(u8, input[0..5], "eight"))
+        return @intCast(8);
+    return null;
+}
+
 test "Day1" {
     try testing.expectEqual(try calibrationValue(testing.allocator, "1abc2"), 12);
     try testing.expectEqual(try calibrationValue(testing.allocator, "pqr3stu8vwx"), 38);
     try testing.expectEqual(try calibrationValue(testing.allocator, "a1b2c3d4e5f"), 15);
     try testing.expectEqual(try calibrationValue(testing.allocator, "treb7uchet"), 77);
+    try testing.expectEqual(try calibrationValue(testing.allocator, "two1nine"), 29);
+    try testing.expectEqual(try calibrationValue(testing.allocator, "eightwothree"), 83);
+    try testing.expectEqual(try calibrationValue(testing.allocator, "4nineeightseven2"), 42);
+}
+test "stringtoint" {
+    try testing.expectEqual(stringToInt("one1"), 1);
+    try testing.expectEqual(stringToInt("seven"), 7);
+    try testing.expectEqual(stringToInt("eight"), 8);
+    try testing.expectEqual(stringToInt("six"), 6);
+    try testing.expectEqual(stringToInt("1"), null);
 }

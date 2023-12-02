@@ -1,12 +1,29 @@
 const std = @import("std");
-const Day = @import("day.zig");
+const aoc = @import("aoc");
 
 pub fn main() !void {
-    var gpa = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer gpa.deinit();
-    var allocator = gpa.allocator();
+    // stdout is for the actual output of your application, for example if you
+    // are implementing gzip, then only the compressed bytes should be sent to
+    // stdout, not any debugging messages.
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
 
-    // Day 1: Calorie Counting
-    var d1 = Day.Day1.init("Day 1: Calorie Counting");
-    try d1.run(allocator);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+
+    try stdout.writeAll("Day 1\n");
+    aoc.day1(stdout) catch |err| {
+        try stdout.print("Error: {s}", .{@errorName(err)});
+    };
+    try stdout.writeAll("------\n");
+
+    try stdout.writeAll("Day 2\n");
+
+    aoc.day2(stdout, arena.allocator()) catch |err| {
+        try stdout.print("Error: {s}", .{@errorName(err)});
+    };
+    try bw.flush();
 }

@@ -62,17 +62,20 @@ pub fn day2(writer: anytype, alloc: std.mem.Allocator) !void {
     const buffer = try alloc.alloc(u8, 1000);
     defer alloc.free(buffer);
 
-    var ret: u32 = 0;
+    var idSum: u32 = 0;
+    var powerSum: u32 = 0;
 
     while (true) {
         const line = try reader.readUntilDelimiterOrEof(buffer, '\n');
         if (line) |l| {
             var gameCount = try parseGame(l);
+            powerSum += gameCount.getPower();
             if (gameCount.isValid(limits))
-                ret += gameCount.gameId;
+                idSum += gameCount.gameId;
         } else break;
     }
-    try writer.print("Sum of game IDs that are possible: {}\n", .{ret});
+    try writer.print("Sum of game IDs that are possible: {}\n", .{idSum});
+    try writer.print("Sum of possible game powers: {}\n", .{powerSum});
 }
 
 const CubeCounts = struct {
@@ -92,6 +95,9 @@ const CubeCounts = struct {
     }
     pub fn isValid(self: *CubeCounts, limits: CubeCounts) bool {
         return self.blue <= limits.blue and self.red <= limits.red and self.green <= limits.green;
+    }
+    fn getPower(self: *CubeCounts) u32 {
+        return self.red * self.green * self.blue;
     }
 };
 
@@ -178,15 +184,55 @@ test "day2" {
 }
 
 test "cube counts" {
-    const test1 = "3 blue, 4 red";
-    const test2 = "1 red, 2 green, 6 blue";
-    _ = test2;
-    const test3 = "2 green";
-    _ = test3;
-    try std.testing.expectEqual(countCubes(test1), .{ .blue = 3, .red = 4 });
+    try std.testing.expectEqual(countCubes("3 blue, 4 red"), .{ .blue = 3, .red = 4 });
+    try std.testing.expectEqual(countCubes("1 red, 2 green, 6 blue"), .{ .blue = 6, .red = 1, .green = 2 });
+    try std.testing.expectEqual(countCubes("2 green"), .{ .green = 2 });
 }
 
 test "gameid" {
     try std.testing.expectEqual(getGameId("Game 5"), 5);
     try std.testing.expectEqual(getGameId("Game 15"), 15);
+}
+
+//part 2
+
+// As you continue your walk, the Elf poses a second question: in each game
+// you played, what is the fewest number of cubes of each color that could
+// have been in the bag to make the game possible?
+//
+// Again consider the example games from earlier:
+//
+// Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+// Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+// Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+// Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+// Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+//
+// In game 1, the game could have been played with as few as 4 red, 2 green,
+// and 6 blue cubes. If any color had even one fewer cube, the game would
+// have been impossible.
+// Game 2 could have been played with a minimum of 1 red, 3 green, and 4 blue
+// cubes.
+// Game 3 must have been played with at least 20 red, 13 green, and 6 blue
+// cubes.
+// Game 4 required at least 14 red, 3 green, and 15 blue cubes.
+// Game 5 needed no fewer than 6 red, 3 green, and 2 blue cubes in the bag.
+// The power of a set of cubes is equal to the numbers of red, green, and
+// blue cubes multiplied together. The power of the minimum set of cubes in
+// game 1 is 48. In games 2-5 it was 12, 1560, 630, and 36, respectively.
+// Adding up these five powers produces the sum 2286.
+//
+// For each game, find the minimum set of cubes that must have been present.
+// What is the sum of the power of these sets?
+test "power" {
+    var t = CubeCounts{ .blue = 6, .red = 4, .green = 2 };
+    try std.testing.expectEqual(t.getPower(), 48);
+    t = .{ .blue = 4, .red = 1, .green = 3 };
+    try std.testing.expectEqual(t.getPower(), 12);
+    t = .{ .blue = 6, .red = 20, .green = 13 };
+    try std.testing.expectEqual(t.getPower(), 1560);
+    t = .{ .blue = 15, .red = 14, .green = 3 };
+    try std.testing.expectEqual(t.getPower(), 630);
+    t = .{ .blue = 2, .red = 6, .green = 3 };
+    try std.testing.expectEqual(t.getPower(), 36);
 }

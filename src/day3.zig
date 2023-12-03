@@ -54,15 +54,16 @@ pub fn day3(writer: anytype, alloc: std.mem.Allocator) !void {
     defer alloc.free(text);
 
     _ = try file.readAll(text);
-    var parts = try parseParts(text, alloc);
-    defer parts.deinit();
+    var out = try parseParts(text, alloc);
+    defer out.deinit();
 
-    for (parts.items) |p| {
+    for (out.parts.items) |p| {
         // std.debug.print("{any}\n", .{p});
         if (p.isValid)
             sum += p.number;
     }
     try writer.print("Sum of part numbers: {}\n", .{sum});
+    try writer.print("Sum of gears: {}\n", .{getGearSum(out)});
 }
 
 const PartNumber = struct {
@@ -76,12 +77,29 @@ const PartNumber = struct {
 const Special = struct {
     index: usize,
     char: u8,
+    adjacents: std.ArrayList(*PartNumber),
 };
 
-fn parseParts(input: []const u8, alloc: std.mem.Allocator) !std.ArrayList(PartNumber) {
-    var partNumbers = std.ArrayList(PartNumber).init(alloc);
-    var specials = std.ArrayList(Special).init(alloc);
-    defer specials.deinit();
+const ParseOutput = struct {
+    parts: std.ArrayList(PartNumber),
+    specials: std.ArrayList(Special),
+
+    pub fn deinit(self: *ParseOutput) void {
+        for (self.specials.items) |s|
+            s.adjacents.deinit();
+        self.specials.deinit();
+        self.parts.deinit();
+    }
+    pub fn init(alloc: std.mem.Allocator) ParseOutput {
+        return .{
+            .parts = std.ArrayList(PartNumber).init(alloc),
+            .specials = std.ArrayList(Special).init(alloc),
+        };
+    }
+};
+
+fn parseParts(input: []const u8, alloc: std.mem.Allocator) !ParseOutput {
+    var ret = ParseOutput.init(alloc);
     var tempString = std.ArrayList(u8).init(alloc);
     defer tempString.deinit();
 
@@ -107,7 +125,7 @@ fn parseParts(input: []const u8, alloc: std.mem.Allocator) !std.ArrayList(PartNu
                     numState = false;
                     tempNum.endIndex = i - 1;
                     tempNum.number = try atoi(tempString.items);
-                    try partNumbers.append(tempNum);
+                    try ret.parts.append(tempNum);
                     tempString.clearAndFree();
                 }
                 switch (s) {
@@ -117,7 +135,11 @@ fn parseParts(input: []const u8, alloc: std.mem.Allocator) !std.ArrayList(PartNu
                     },
                     '#', '*', '+', '$', '-', '/', '\\', '%', '@', '!', '(', ')', '&', '=' => {
                         numState = false;
-                        try specials.append(.{ .index = i, .char = s });
+                        try ret.specials.append(.{
+                            .index = i,
+                            .char = s,
+                            .adjacents = std.ArrayList(*PartNumber).init(alloc),
+                        });
                     },
                     '\n' => {
                         lineNumber += 1;
@@ -135,18 +157,19 @@ fn parseParts(input: []const u8, alloc: std.mem.Allocator) !std.ArrayList(PartNu
     // std.debug.print("Width: {}\n", .{width});
     // for (specials.items) |s|
     //     std.debug.print("Special '{c}' found at {}\n", .{ s.char, s.index });
-    for (partNumbers.items) |*pn| {
-        if (specialAdjacent(pn, specials, width))
+    for (ret.parts.items) |*pn| {
+        if (try specialAdjacent(pn, ret.specials, width))
             pn.isValid = true;
     }
-    return partNumbers;
+
+    return ret;
 }
 
 fn specialAdjacent(
     part: *PartNumber,
     specials: std.ArrayList(Special),
     width: usize,
-) bool {
+) !bool {
     const len = part.endIndex - part.startIndex + 1;
     _ = len;
     const widthWithNewline = width;
@@ -159,15 +182,38 @@ fn specialAdjacent(
     //     "Checking bounding box for {any} {},{},{},{}\n",
     //     .{ part, upperLeft, upperRight, lowerLeft, lowerRight },
     // );
-    for (specials.items) |s| {
+    var ret = false;
+    for (specials.items) |*s| {
         if (upperLeft <= s.index and upperRight >= s.index)
-            return true;
+            ret = true;
         if (part.startIndex != 0 and part.startIndex - 1 <= s.index and part.endIndex + 1 >= s.index)
-            return true;
+            ret = true;
         if (lowerLeft <= s.index and lowerRight >= s.index)
-            return true;
+            ret = true;
+
+        if (ret) {
+            try s.adjacents.append(part);
+            return ret;
+        }
     }
-    return false;
+    return ret;
+}
+
+fn getGearSum(partlist: ParseOutput) u32 {
+    var sum: u32 = 0;
+    for (partlist.specials.items) |s| {
+        // std.debug.print("Checking for gears for {c}, adjacents: {}\n", .{ s.char, s.adjacents.items.len });
+        if (s.char == '*' and s.adjacents.items.len == 2) {
+            sum += s.adjacents.items[0].number * s.adjacents.items[1].number;
+            // std.debug.print("Found gear: {}*{} = {}, ret = {}\n", .{
+            //     s.adjacents.items[0].number,
+            //     s.adjacents.items[1].number,
+            //     s.adjacents.items[0].number * s.adjacents.items[1].number,
+            //     sum,
+            // });
+        }
+    }
+    return sum;
 }
 
 test "day3" {
@@ -183,16 +229,18 @@ test "day3" {
         \\...$.*....
         \\.664.598..
     ;
-    const pn = try parseParts(
+    var pn = try parseParts(
         input,
         std.testing.allocator,
     );
     defer pn.deinit();
+
     var sum: u32 = 0;
-    for (pn.items) |p| {
-        std.debug.print("{any}\n", .{p});
+    for (pn.parts.items) |p| {
+        // std.debug.print("{any}\n", .{p});
         if (p.isValid)
             sum += p.number;
     }
     try std.testing.expectEqual(sum, 4361);
+    try std.testing.expectEqual(getGearSum(pn), 467835);
 }

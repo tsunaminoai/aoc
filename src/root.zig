@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 pub const day2 = @import("day2.zig").day2;
+pub const day3 = @import("day3.zig").day3;
 
 /// The newly-improved calibration document consists of lines of text; each
 /// line originally contained a specific calibration value that the Elves now

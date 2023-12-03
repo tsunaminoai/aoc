@@ -132,9 +132,9 @@ fn parseParts(input: []const u8, alloc: std.mem.Allocator) !std.ArrayList(PartNu
             },
         }
     }
-    std.debug.print("Width: {}\n", .{width});
-    for (specials.items) |s|
-        std.debug.print("Special '{c}' found at {}\n", .{ s.char, s.index });
+    // std.debug.print("Width: {}\n", .{width});
+    // for (specials.items) |s|
+    //     std.debug.print("Special '{c}' found at {}\n", .{ s.char, s.index });
     for (partNumbers.items) |*pn| {
         if (specialAdjacent(pn, specials, width))
             pn.isValid = true;
@@ -155,10 +155,10 @@ fn specialAdjacent(
     const upperRight: usize = if (part.lineNumber != 0) part.endIndex - widthWithNewline + 1 else 0;
     const lowerLeft: usize = part.startIndex + widthWithNewline - 1;
     const lowerRight: usize = part.endIndex + widthWithNewline + 1;
-    std.debug.print(
-        "Checking bounding box for {any} {},{},{},{}\n",
-        .{ part, upperLeft, upperRight, lowerLeft, lowerRight },
-    );
+    // std.debug.print(
+    //     "Checking bounding box for {any} {},{},{},{}\n",
+    //     .{ part, upperLeft, upperRight, lowerLeft, lowerRight },
+    // );
     for (specials.items) |s| {
         if (upperLeft <= s.index and upperRight >= s.index)
             return true;

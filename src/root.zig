@@ -3,6 +3,7 @@ const testing = std.testing;
 pub const day2 = @import("day2.zig").day2;
 pub const day3 = @import("day3.zig").day3;
 pub const day4 = @import("day4.zig").day4;
+pub const atoi = stringDigitsToNumber;
 
 /// The newly-improved calibration document consists of lines of text; each
 /// line originally contained a specific calibration value that the Elves now

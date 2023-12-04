@@ -1,5 +1,9 @@
 const std = @import("std");
 const testing = std.testing;
+pub const day2 = @import("day2.zig").day2;
+pub const day3 = @import("day3.zig").day3;
+pub const day4 = @import("day4.zig").day4;
+pub const atoi = stringDigitsToNumber;
 
 /// The newly-improved calibration document consists of lines of text; each
 /// line originally contained a specific calibration value that the Elves now
@@ -55,7 +59,7 @@ pub fn stringDigitsToNumber(input: []const u8) !u32 {
     for (input) |c| {
         const d: u8 = try std.fmt.charToDigit(c, 10);
         ret = ret * 10 + d;
-        std.debug.print("c: {c} d: {} ret: {}\n", .{ c, d, ret });
+        // std.debug.print("c: {c} d: {} ret: {}\n", .{ c, d, ret });
     }
     return ret;
 }
@@ -126,4 +130,7 @@ test "stringtoint" {
     try testing.expectEqual(stringToInt("eight"), 8);
     try testing.expectEqual(stringToInt("six"), 6);
     try testing.expectEqual(stringToInt("1"), null);
+}
+test {
+    testing.refAllDecls(@This());
 }

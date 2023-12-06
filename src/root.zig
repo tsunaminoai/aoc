@@ -3,6 +3,8 @@ const testing = std.testing;
 pub const day2 = @import("day2.zig").day2;
 pub const day3 = @import("day3.zig").day3;
 pub const day4 = @import("day4.zig").day4;
+pub const day5 = @import("day5.zig").day5;
+pub const day6 = @import("day6.zig").day6;
 pub const atoi = stringDigitsToNumber;
 
 /// The newly-improved calibration document consists of lines of text; each
@@ -57,13 +59,28 @@ pub fn calibrationValue(alloc: Allocator, input: []const u8) !u32 {
 pub fn stringDigitsToNumber(input: []const u8) !u32 {
     var ret: u32 = 0;
     for (input) |c| {
-        const d: u8 = try std.fmt.charToDigit(c, 10);
+        const d: u8 = std.fmt.charToDigit(c, 10) catch |err| {
+            std.debug.print("atoi Invalid string passed: \"{s}\"\n", .{input});
+            return err;
+        };
         ret = ret * 10 + d;
         // std.debug.print("c: {c} d: {} ret: {}\n", .{ c, d, ret });
     }
     return ret;
 }
 
+pub fn atoi2(comptime T: type, input: []const u8) !T {
+    var ret: u64 = 0;
+    for (input) |c| {
+        const d: u8 = std.fmt.charToDigit(c, 10) catch |err| {
+            std.debug.print("atoi Invalid string passed: \"{s}\"\n", .{input});
+            return err;
+        };
+        ret = ret * 10 + d;
+        // std.debug.print("c: {c} d: {} ret: {}\n", .{ c, d, ret });
+    }
+    return @as(T, @intCast(ret));
+}
 pub fn day1(writer: anytype) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();

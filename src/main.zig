@@ -42,4 +42,13 @@ pub fn main() !void {
         try stdout.print("Error: {s}", .{@errorName(err)});
     };
     try bw.flush();
+
+    try stdout.writeAll("------\n");
+
+    try stdout.writeAll("Day 6\n");
+
+    aoc.day6(stdout, arena.allocator()) catch |err| {
+        try stdout.print("Error: {s}", .{@errorName(err)});
+    };
+    try bw.flush();
 }

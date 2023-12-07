@@ -117,7 +117,7 @@ fn cardCount(tickets: std.ArrayList(Ticket)) u32 {
     var sum: u32 = 0;
     for (tickets.items, 0..) |t, currentIdx| {
         sum += t.copies;
-        std.debug.print("{}, sum: {}\n", .{ t, sum });
+        // std.debug.print("{}, sum: {}\n", .{ t, sum });
 
         for (1..t.matches + 1) |nextIdx|
             tickets.items[currentIdx + nextIdx].copies += t.copies;

@@ -5,6 +5,7 @@ pub const day3 = @import("day3.zig").day3;
 pub const day4 = @import("day4.zig").day4;
 pub const day5 = @import("day5.zig").day5;
 pub const day6 = @import("day6.zig").day6;
+pub const day7 = @import("day7.zig").day7;
 pub const atoi = stringDigitsToNumber;
 
 /// The newly-improved calibration document consists of lines of text; each

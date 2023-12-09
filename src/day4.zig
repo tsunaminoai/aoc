@@ -117,7 +117,7 @@ fn cardCount(tickets: std.ArrayList(Ticket)) u32 {
     var sum: u32 = 0;
     for (tickets.items, 0..) |t, currentIdx| {
         sum += t.copies;
-        std.debug.print("{}, sum: {}\n", .{ t, sum });
+        // std.debug.print("{}, sum: {}\n", .{ t, sum });
 
         for (1..t.matches + 1) |nextIdx|
             tickets.items[currentIdx + nextIdx].copies += t.copies;
@@ -143,6 +143,8 @@ fn ticketScore(input: []const u8, alloc: std.mem.Allocator) !Ticket {
     };
 
     while (winningIter.next()) |num| {
+        // std.debug.print("buffer: {s},  check token: {s}, ocurrances: {}\n", .{ scratchIter.buffer, num, std.mem.count(u8, scratchIter.buffer, num) });
+
         scratchIter.reset();
         while (scratchIter.next()) |check| {
             if (check.len == num.len and std.mem.eql(u8, num, check)) {

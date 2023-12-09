@@ -7,8 +7,8 @@ pub fn day9(writer: anytype, alloc: std.mem.Allocator) !void {
     defer file.close();
 
     const content = try file.readToEndAlloc(alloc, 100_000);
-    const ret = try part1(content, alloc);
-    try writer.print("Sum of all evil: {}\n", .{ret});
+    try writer.print("Sum of part1: {}\n", .{try part1(content, alloc)});
+    try writer.print("Sum of part2: {}\n", .{try part2(content, alloc)});
 }
 
 fn nextSequence(input: std.ArrayList(i32), alloc: Allocator) !std.ArrayList(i32) {
@@ -74,6 +74,24 @@ fn extrapolate(chain: std.ArrayList(std.ArrayList(i32))) !i32 {
     return ret;
 }
 
+fn extrapolateBackwards(chain: std.ArrayList(std.ArrayList(i32))) !i32 {
+    const idx: i8 = @intCast(chain.items.len - 1);
+    _ = idx;
+    var last: i32 = 0;
+    const items = chain.items;
+    var ret: i32 = 0;
+
+    std.mem.reverse(std.ArrayList(i32), items);
+    for (items) |*item| {
+        const lastVal = item.items[0];
+        const newVal = lastVal - last;
+        last = newVal;
+        try item.append(newVal);
+        ret = newVal;
+    }
+    return ret;
+}
+
 pub fn part1(input: []const u8, alloc: Allocator) !i32 {
     const sequences = try decompose(input, alloc);
     var sum: i32 = 0;
@@ -83,6 +101,16 @@ pub fn part1(input: []const u8, alloc: Allocator) !i32 {
         sum += try extrapolate(chain);
         // for (chain.items) |c|
         //     std.debug.print("\t{any}\n", .{c.items});
+    }
+    return sum;
+}
+
+pub fn part2(input: []const u8, alloc: Allocator) !i32 {
+    const sequences = try decompose(input, alloc);
+    var sum: i32 = 0;
+    for (sequences.items) |seq| {
+        const chain = try seqChain(seq, alloc);
+        sum += try extrapolateBackwards(chain);
     }
     return sum;
 }
@@ -125,7 +153,21 @@ test "day9" {
     const alloc = arena.allocator();
 
     const answer = 114;
+    const answer2 = 2;
 
     const ret = try part1(INPUT, alloc);
     try testing.expectEqual(ret, answer);
+
+    const ret2 = try part2(INPUT, alloc);
+    try testing.expectEqual(ret2, answer2);
+}
+
+test "part 2" {
+    const INPUT = "10  13  16  21  30  45";
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    const ret = try part2(INPUT, alloc);
+    try testing.expectEqual(ret, 5);
 }

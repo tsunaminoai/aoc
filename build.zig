@@ -4,7 +4,7 @@ const days = &[_][]const u8{
     // zig fmt: off
     // "1",
     "2","3","4","5","6","7",
-    "8","9",
+    "8","9", "10"
     // zig fmt: on
 };
 
@@ -18,6 +18,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const test_step = b.step("test", "Run tests");
+    const documentation = b.option(bool, "docs", "Generate documentation") orelse false;
+    const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
 
     inline for(days)|day|{
         const exe = b.addExecutable(.{
@@ -53,7 +55,19 @@ pub fn build(b: *std.Build) void {
             .root_source_file = .{ .path = test_module },
         });
         test_step.dependOn(&exe_tests.step);
+
+
+        if (documentation) {
+            const install_docs =  b.addInstallDirectory(.{
+                .source_dir =  lib.getEmittedDocs(),
+                .install_dir = .prefix,
+                .install_subdir = "docs",
+            });
+
+            docs_step.dependOn(&install_docs.step);
+        }
     }
+    
     // // This *creates* a Run step in the build graph, to be executed when another
     // // step is evaluated that depends on it. The next line below will establish
     // // such a dependency.

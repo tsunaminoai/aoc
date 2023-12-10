@@ -1,3 +1,12 @@
+/// Day 6
+/// ------
+/// Ways to beat elves: 2344708
+/// Actual number: 30125202
+///
+/// ________________________________________________________
+/// Executed in  261.16 millis    fish           external
+///    usr time  201.30 millis   45.00 micros  201.25 millis
+///    sys time   50.30 millis  552.00 micros   49.74 millis
 const std = @import("std");
 const atoi = @import("root.zig").atoi2;
 
@@ -14,7 +23,7 @@ const RaceList = std.ArrayList(Race);
 const Race = struct { time: u64 = 0, dist: u64 = 0 };
 const eql = std.mem.eql;
 
-pub fn day6(writer: anytype, alloc: std.mem.Allocator) !void {
+pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     const ret1 = try part1(INPUT, alloc);
     const ret2 = try part2(INPUT, alloc);
     try writer.print("Ways to beat elves: {}\n", .{ret1});

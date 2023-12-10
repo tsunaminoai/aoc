@@ -3,7 +3,7 @@
 const std = @import("std");
 const atoi = @import("root.zig").atoi2;
 
-pub fn day7(writer: anytype, alloc: std.mem.Allocator) !void {
+pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     var file = try std.fs.cwd().openFile("inputs/day7.txt", .{});
     defer file.close();
 

@@ -1,8 +1,22 @@
+/// ~/c/aoc 2023• ❱ zig build -Doptimize=ReleaseSmall day9
+/// Day 9
+/// ------
+/// Sum of part1: 1731106378
+/// Sum of part2: 1087
+/// ~/c/aoc 2023• ❱ time ./zig-out/bin/day9
+/// Day 9
+/// ------
+/// Sum of part1: 1731106378
+/// Sum of part2: 1087
+/// ________________________________________________________
+/// Executed in    4.69 millis    fish           external
+///    usr time    1.62 millis   35.00 micros    1.58 millis
+///    sys time    1.95 millis  447.00 micros    1.50 millis
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
 
-pub fn day9(writer: anytype, alloc: std.mem.Allocator) !void {
+pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     var file = try std.fs.cwd().openFile("inputs/day9.txt", .{});
     defer file.close();
 

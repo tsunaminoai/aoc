@@ -1,13 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
-pub const day2 = @import("day2.zig").day2;
-pub const day3 = @import("day3.zig").day3;
-pub const day4 = @import("day4.zig").day4;
-pub const day5 = @import("day5.zig").day5;
-pub const day6 = @import("day6.zig").day6;
-pub const day7 = @import("day7.zig").day7;
-pub const day8 = @import("day8.zig").day8;
-pub const day9 = @import("day9.zig").day9;
+
 pub const atoi = stringDigitsToNumber;
 
 /// The newly-improved calibration document consists of lines of text; each

@@ -14,11 +14,22 @@ const Galaxy = struct {
     x: i32,
     y: i32,
 };
+const Distance = struct {
+    g1: *Galaxy,
+    g2: *Galaxy,
+    distance: i32 = 0,
+    pub fn findDistance(self: *Distance) i32 {
+        const a = @as(f32, @floatFromInt(self.g2.x - self.g1.x)) + 1;
+        const b = @as(f32, @floatFromInt(self.g2.y - self.g1.y)) + 1;
+        return @as(i32, @intFromFloat(@ceil(@sqrt(a * a + b * b) + 1)));
+    }
+};
 const Map = struct {
     width: i32,
     height: i32,
     data: Array(Array(u8)),
     galaxies: Array(Galaxy),
+    distances: Array(Distance),
 
     var ally: Allocator = undefined;
 
@@ -34,6 +45,7 @@ const Map = struct {
             .height = h,
             .data = Array(Array(u8)).init(ally),
             .galaxies = Array(Galaxy).init(ally),
+            .distances = Array(Distance).init(ally),
         };
 
         for (0..@intCast(w)) |_|
@@ -61,6 +73,39 @@ const Map = struct {
         }
     }
 
+    pub fn getDistances(self: *Map) u32 {
+        var sum: u32 = 0;
+        for (self.distances.items) |*d| {
+            std.debug.print("Distance between {} and {} = {}\n", .{ d.g1.id, d.g2.id, @abs(d.findDistance()) });
+            sum += @abs(d.findDistance());
+        }
+        return sum;
+    }
+
+    fn findGalaxies(self: *Map) !void {
+        var ids: i32 = 0;
+        for (self.data.items, 0..) |row, x| {
+            for (row.items, 0..) |col, y| {
+                if (col == '#') {
+                    try self.galaxies.append(Galaxy{
+                        .id = ids,
+                        .x = @intCast(x),
+                        .y = @intCast(y),
+                    });
+                    ids += 1;
+                }
+            }
+        }
+        for (self.galaxies.items, 0..) |*g, i| {
+            for (self.galaxies.items[i + 1 ..]) |*other| {
+                try self.distances.append(Distance{
+                    .g1 = g,
+                    .g2 = other,
+                });
+            }
+        }
+    }
+
     fn expand(self: *Map) !void {
         //expand by rows
 
@@ -69,7 +114,6 @@ const Map = struct {
         @memset(columnsToExpand, true);
         @memset(rowsToExpand, true);
 
-        var totalGs: usize = 0;
         for (self.data.items, 0..) |row, i| {
             var gCount: usize = 0;
             for (row.items, 0..) |col, j| {
@@ -81,7 +125,6 @@ const Map = struct {
             if (gCount != 0) {
                 rowsToExpand[i] = false;
             }
-            totalGs += gCount;
         }
 
         var addedRows: usize = 0;
@@ -135,9 +178,14 @@ test "map" {
     try testing.expectEqualDeep(string, @constCast(Sample1));
 
     try m.expand();
-    std.debug.print("Map:\n{}\n", .{m});
     string = try std.fmt.bufPrint(buf, "{}", .{m});
     try testing.expectEqualDeep(string, @constCast(Sample1Expanded));
+
+    try m.findGalaxies();
+    try testing.expectEqual(m.galaxies.items.len, 9);
+
+    std.debug.print("{}\n", .{m.getDistances()});
+    try testing.expectEqual(m.getDistances(), 374);
 }
 const Sample1 =
     \\...#......

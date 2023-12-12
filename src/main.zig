@@ -1,5 +1,5 @@
 const std = @import("std");
-const aoc = @import("aoc");
+const aoc = @import("day");
 const config = @import("config");
 
 pub fn main() !void {

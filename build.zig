@@ -1,53 +1,41 @@
 const std = @import("std");
 
-const days = &[_][]const u8{
-    // zig fmt: off
-    // "1",
-    "2","3","4","5","6","7",
-    "8","9", "10", "11"
-    // zig fmt: on
+pub const days = &[_][]const u8{
+    "1", "2", "3",  "4",  "5", "6", "7",
+    "8", "9", "10", "11",
 };
 
-
-
 pub fn build(b: *std.Build) void {
- 
     const target = b.standardTargetOptions(.{});
 
-  
     const optimize = b.standardOptimizeOption(.{});
 
     const test_step = b.step("test", "Run tests");
     const documentation = b.option(bool, "docs", "Generate documentation") orelse false;
     const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
 
-    inline for(days)|day|{
+    inline for (days) |day| {
         const exe = b.addExecutable(.{
             .name = "day" ++ day,
             .root_source_file = .{ .path = "src/main.zig" },
             .target = target,
             .optimize = optimize,
         });
-        const libModule = b.addModule("aoc", .{
-            .source_file = .{ .path = "src/day" ++  day ++ ".zig"  },
+        const day_module = b.addModule("day", .{
+            .source_file = .{ .path = "src/day" ++ day ++ ".zig" },
         });
-        const lib = b.addStaticLibrary(.{
-            .name = "aoc",
-            .root_source_file = .{  .path = "src/day" ++  day ++ ".zig" },
-            .target = target,
-            .optimize = optimize,
-        });
-        exe.addModule("aoc", libModule);
-        exe.linkLibrary(lib);
+        exe.addModule("day", day_module);
+
         const dayopt = b.addOptions();
         dayopt.addOption([]const u8, "DAY", day);
+        dayopt.addOption([days.len][]const u8, "DAYS", days.*);
         exe.addOptions("config", dayopt);
 
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);
         run_cmd.step.dependOn(b.getInstallStep());
-        const run_step = b.step("day" ++ day, "Run day "++day++"'s file");
+        const run_step = b.step("day" ++ day, "Run day " ++ day ++ "'s file");
         run_step.dependOn(&run_cmd.step);
 
         const test_module = b.fmt("src/day{s}.zig", .{day});
@@ -56,18 +44,17 @@ pub fn build(b: *std.Build) void {
         });
         test_step.dependOn(&exe_tests.step);
 
-
         if (documentation) {
-            const install_docs =  b.addInstallDirectory(.{
-                .source_dir =  lib.getEmittedDocs(),
+            const install_docs = b.addInstallDirectory(.{
+                .source_dir = exe.getEmittedDocs(),
                 .install_dir = .prefix,
-                .install_subdir = "docs",
+                .install_subdir = "docs" ++ day,
             });
 
             docs_step.dependOn(&install_docs.step);
         }
     }
-    
+
     // // This *creates* a Run step in the build graph, to be executed when another
     // // step is evaluated that depends on it. The next line below will establish
     // // such a dependency.

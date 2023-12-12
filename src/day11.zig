@@ -4,10 +4,6 @@ const testing = std.testing;
 const Array = std.ArrayList;
 
 pub fn day(writer: anytype, alloc: Allocator) !void {
-    try part1(writer, alloc);
-}
-
-pub fn part1(writer: anytype, alloc: Allocator) !void {
     var a = std.heap.ArenaAllocator.init(alloc);
     defer a.deinit();
 
@@ -17,9 +13,12 @@ pub fn part1(writer: anytype, alloc: Allocator) !void {
     var m = try Map.init(content, alloc);
     defer m.deinit();
 
-    try m.expand();
+    try m.expand(2);
     try m.findGalaxies();
-    try writer.print("Distances sum: {}\n", .{m.getDistances()});
+    try writer.print("Part 1: Distances sum: {}\n", .{m.getDistances()});
+    try m.expand(500_000);
+    try m.findGalaxies();
+    try writer.print("Part 2: Distances sum: {}\n", .{m.getDistances()});
 }
 
 /// expand and then do path finding between #'s using only LRUD
@@ -118,7 +117,7 @@ const Map = struct {
         }
     }
 
-    fn expand(self: *Map) !void {
+    fn expand(self: *Map, by: usize) !void {
         //expand by rows
 
         var columnsToExpand = try ally.alloc(bool, @intCast(self.width));
@@ -142,23 +141,28 @@ const Map = struct {
         var addedRows: usize = 0;
         var rowExp = std.mem.indexOfPos(bool, rowsToExpand, 0, &[_]bool{true});
         while (rowExp) |r| {
-            var a = Array(u8).init(ally);
-            try a.appendNTimes('.', @intCast(self.width));
-            try self.data.insert(r + addedRows, a);
+            const new = try self.data.addManyAt(r + addedRows, by);
+            for (new) |*b| {
+                b.* = Array(u8).init(ally);
+                try b.*.appendNTimes('.', @intCast(self.width));
+            }
+            self.height += @intCast(by);
+            addedRows += by;
             rowExp = std.mem.indexOfPos(bool, rowsToExpand, r + 1, &[_]bool{true});
-            self.height += 1;
-            addedRows += 1;
         }
 
         var addedCols: usize = 0;
         var colExp = std.mem.indexOfPos(bool, columnsToExpand, 0, &[_]bool{true});
         while (colExp) |c| {
             for (self.data.items) |*row| {
-                try row.insert(c + addedCols, '.');
+                const t = try ally.alloc(u8, by);
+                @memset(t, '.');
+                try row.*.insertSlice(c + addedCols, t);
+
+                self.width += @intCast(by);
             }
+            addedCols += by;
             colExp = std.mem.indexOfPos(bool, columnsToExpand, c + 1, &[_]bool{true});
-            self.width += 1;
-            addedCols += 1;
         }
     }
 
@@ -185,18 +189,17 @@ test "map" {
     var m = try Map.init(Sample1, alloc);
     defer m.deinit();
 
-    const buf = try alloc.alloc(u8, 1000);
+    const buf = try alloc.alloc(u8, 100000);
     var string = try std.fmt.bufPrint(buf, "{}", .{m});
     try testing.expectEqualDeep(string, @constCast(Sample1));
 
-    try m.expand();
+    try m.expand(1);
     string = try std.fmt.bufPrint(buf, "{}", .{m});
     try testing.expectEqualDeep(string, @constCast(Sample1Expanded));
 
     try m.findGalaxies();
     try testing.expectEqual(m.galaxies.items.len, 9);
 
-    std.debug.print("{}\n", .{m.getDistances()});
     try testing.expectEqual(m.getDistances(), 374);
 }
 const Sample1 =

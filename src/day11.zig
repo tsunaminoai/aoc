@@ -4,8 +4,18 @@ const testing = std.testing;
 const Array = std.ArrayList;
 
 pub fn day(writer: anytype, alloc: Allocator) !void {
-    _ = alloc;
-    _ = writer;
+    var a = std.heap.ArenaAllocator.init(alloc);
+    defer a.deinit();
+
+    var f = try std.fs.cwd().openFile("inputs/day11.txt", .{});
+    defer f.close();
+    const content = try f.readToEndAlloc(alloc, 100_000);
+    var m = try Map.init(content, alloc);
+    defer m.deinit();
+
+    try m.expand();
+    try m.findGalaxies();
+    try writer.print("Distances sum: {}\n", .{m.getDistances()});
 }
 
 /// expand and then do path finding between #'s using only LRUD

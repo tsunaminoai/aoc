@@ -22,8 +22,8 @@ pub fn part1(input: []const u8, alloc: Alloctor) !u32 {
     try g.processInput(input);
 
     // std.debug.print("{}", .{g});
-    const depth = try g.findDepth();
-    return depth / 2;
+    const depth = try g.bredth();
+    return depth;
 }
 
 const Direction = enum {
@@ -34,6 +34,7 @@ const Direction = enum {
 };
 const Connection = struct {
     dest: ?*Node = null,
+    dir: Direction,
 };
 
 const Node = struct {
@@ -43,10 +44,7 @@ const Node = struct {
     alloc: Alloctor,
     ptr: *Node = undefined,
 
-    north: ?Connection = null,
-    east: ?Connection = null,
-    south: ?Connection = null,
-    west: ?Connection = null,
+    adjacents: Array(Connection),
 
     /// | is a vertical pipe connecting north and south.
     /// - is a horizontal pipe connecting east and west.
@@ -62,40 +60,41 @@ const Node = struct {
         node.* = Node{
             .char = char,
             .alloc = alloc,
+            .adjacents = Array(Connection).init(alloc),
         };
         switch (char) {
             '|' => {
-                node.*.north = Connection{};
-                node.*.south = Connection{};
+                try node.adjacents.append(.{ .dir = .north });
+                try node.adjacents.append(.{ .dir = .south });
             },
             '-' => {
-                node.*.east = Connection{};
-                node.*.west = Connection{};
+                try node.adjacents.append(.{ .dir = .east });
+                try node.adjacents.append(.{ .dir = .west });
             },
             'L' => {
-                node.*.north = Connection{};
-                node.*.east = Connection{};
+                try node.adjacents.append(.{ .dir = .north });
+                try node.adjacents.append(.{ .dir = .east });
             },
             'J' => {
-                node.*.north = Connection{};
-                node.*.west = Connection{};
+                try node.adjacents.append(.{ .dir = .north });
+                try node.adjacents.append(.{ .dir = .west });
             },
             '7' => {
-                node.*.west = Connection{};
-                node.*.south = Connection{};
+                try node.adjacents.append(.{ .dir = .west });
+                try node.adjacents.append(.{ .dir = .south });
             },
             'F' => {
-                node.*.east = Connection{};
-                node.*.south = Connection{};
+                try node.adjacents.append(.{ .dir = .east });
+                try node.adjacents.append(.{ .dir = .south });
             },
             '.' => {
-                node.*.discovered = true;
+                node.discovered = true;
             },
             'S' => {
-                node.*.north = Connection{};
-                node.*.south = Connection{};
-                node.*.east = Connection{};
-                node.*.west = Connection{};
+                try node.adjacents.append(.{ .dir = .north });
+                try node.adjacents.append(.{ .dir = .south });
+                try node.adjacents.append(.{ .dir = .east });
+                try node.adjacents.append(.{ .dir = .west });
             },
             else => {
                 std.debug.print("Unknown character input: {c}\n", .{char});
@@ -105,6 +104,13 @@ const Node = struct {
         node.ptr = node;
         return node;
     }
+};
+
+const GraphT = struct {
+    verticiesLen: usize,
+    adjacents: [][]bool,
+    const Self = @This();
+    pub fn init() Self {}
 };
 const Graph = struct {
     start: ?*Node = null,
@@ -129,40 +135,20 @@ const Graph = struct {
     pub fn processLine(self: *Self, line: []const u8) !void {
         const currentLineIdx = self.height;
         // std.debug.print("Processing line of len {}: {s}\n", .{ line.len, line });
-        blk: for (line, 0..) |char, idx| {
+        for (line, 0..) |char, idx| {
             const newNode = try self.addNode(char);
-            if (char == 'S') {
+            if (char == 'S')
                 self.start = newNode;
-                if (self.height < 1)
-                    newNode.north = null;
-                if (idx < 1)
-                    newNode.west = null;
-            }
-            if (newNode.north != null) {
-                if (self.height < 1) {
-                    std.debug.print(
-                        "WARN: Attempting to add a connection to the top side of: {c}\n",
-                        .{newNode.char},
-                    );
-                    newNode.north = null;
-                    continue :blk;
-                }
+
+            if (self.height > 0) {
                 const north = self.nodes.items[(currentLineIdx - 1) * self.width + idx];
-                newNode.north = .{ .dest = north };
-                north.south = .{ .dest = newNode };
+                try newNode.adjacents.append(.{ .dir = .north, .dest = north });
+                try north.adjacents.append(.{ .dir = .south, .dest = newNode });
             }
-            if (newNode.west != null) {
-                if (idx < 1) {
-                    std.debug.print(
-                        "WARN: Attempting to add a connection to the left hand side of: {c}\n",
-                        .{newNode.char},
-                    );
-                    newNode.west = null;
-                    continue :blk;
-                }
+            if (idx > 0) {
                 const west = self.nodes.items[currentLineIdx * self.width + idx - 1];
-                newNode.west = .{ .dest = west };
-                west.east = .{ .dest = newNode };
+                try newNode.adjacents.append(.{ .dir = .west, .dest = west });
+                try west.adjacents.append(.{ .dir = .east, .dest = newNode });
             }
         }
 
@@ -185,7 +171,7 @@ const Graph = struct {
     pub fn getMaxDistance(self: Self) u32 {
         var max: u32 = 0;
         for (self.nodes.items) |n| {
-            if (n.distanceFromStart > max)
+            if (n.distanceFromStart > max and n.discovered == true)
                 max = n.distanceFromStart;
         }
         return max;
@@ -229,43 +215,71 @@ const Graph = struct {
         while (iter.next()) |line|
             try self.processLine(line);
     }
+    fn bredth(self: *Self) !u32 {
+        var queue = try self.alloc.alloc(*Node, self.nodes.items.len);
+        defer self.alloc.free(queue);
 
-    fn depthRecursive(self: *Self, node: *Node, traveled: *u32) !u32 {
-        if (!node.discovered) {
-            node.discovered = true;
-            // std.debug.print("Looking at {c}\n", .{node.char});
-            var sum: u32 = 0;
-            traveled.* += 1;
+        var front: usize = 0;
+        var back: usize = 0;
+        var node = self.start.?;
+        node.discovered = true;
 
-            if (node.north) |n| {
-                if (n.dest) |d|
-                    sum += try depthRecursive(self, d, traveled);
+        back += 1;
+        queue[back] = node;
+
+        var steps: u32 = 1;
+
+        outer: while (front != back and back < queue.len) {
+            front += 1;
+            node = queue[front];
+
+            // node.discovered = true;
+            node.distanceFromStart = steps;
+
+            // std.debug.print("front: {}, back: {}\nprocessing: {c} {}\n", .{
+            //     front,
+            //     back,
+            //     node.char,
+            //     node.distanceFromStart,
+            // });
+            for (node.adjacents.items) |adj| {
+                if (adj.dest) |d| {
+                    if (d.char == 'S' and steps > 10)
+                        break :outer;
+                    if (!d.discovered) {
+                        back += 1;
+                        d.discovered = true;
+                        queue[back] = d;
+                        node.distanceFromStart += 1;
+                    }
+                }
             }
-            if (node.south) |n| {
-                if (n.dest) |d|
-                    sum += try depthRecursive(self, d, traveled);
-            }
-            if (node.west) |n| {
-                if (n.dest) |d|
-                    sum += try depthRecursive(self, d, traveled);
-            }
-            if (node.east) |n| {
-                if (n.dest) |d|
-                    sum += try depthRecursive(self, d, traveled);
-            }
-            node.distanceFromStart = traveled.*;
-            traveled.* -= 1;
-            return sum + 1;
+            steps += 1;
         }
-        return 0;
-    }
-    pub fn findDepth(self: *Self) !u32 {
-        var travelDistance: u32 = 0;
-        _ = try self.depthRecursive(self.start.?, &travelDistance);
+
         return self.getMaxDistance() / 2;
     }
 };
 
+test "day10 BFS" {
+    const INPUT =
+        \\..F7.
+        \\.FJ|.
+        \\SJ.L7
+        \\|F--J
+        \\LJ...
+    ;
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+
+    const alloc = arena.allocator();
+    var g = Graph.init(alloc);
+    defer g.deinit();
+
+    try g.processInput(INPUT);
+    const out = try g.bredth();
+    std.debug.print("{dist} {d}", .{ g, out });
+}
 test "day10 sample 1" {
     const INPUT =
         \\.....

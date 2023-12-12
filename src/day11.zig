@@ -4,6 +4,10 @@ const testing = std.testing;
 const Array = std.ArrayList;
 
 pub fn day(writer: anytype, alloc: Allocator) !void {
+    try part1(writer, alloc);
+}
+
+pub fn part1(writer: anytype, alloc: Allocator) !void {
     var a = std.heap.ArenaAllocator.init(alloc);
     defer a.deinit();
 
@@ -29,8 +33,7 @@ const Distance = struct {
     g2: *Galaxy,
     distance: i32 = 0,
     pub fn findDistance(self: *Distance) i32 {
-        return self.g2.x - self.g1.x +
-            self.g2.y - self.g1.y;
+        return @intCast(@abs(self.g2.x - self.g1.x) + @abs(self.g2.y - self.g1.y));
     }
 };
 const Map = struct {
@@ -85,7 +88,7 @@ const Map = struct {
     pub fn getDistances(self: *Map) u32 {
         var sum: u32 = 0;
         for (self.distances.items) |*d| {
-            std.debug.print("Distance between {} and {} = {}\n", .{ d.g1.id, d.g2.id, @abs(d.findDistance()) });
+            // std.debug.print("Distance between {} and {} = {}\n", .{ d.g1.id, d.g2.id, @abs(d.findDistance()) });
             sum += @abs(d.findDistance());
         }
         return sum;

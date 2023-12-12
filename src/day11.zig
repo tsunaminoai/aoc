@@ -19,9 +19,8 @@ const Distance = struct {
     g2: *Galaxy,
     distance: i32 = 0,
     pub fn findDistance(self: *Distance) i32 {
-        const a = @as(f32, @floatFromInt(self.g2.x - self.g1.x)) + 1;
-        const b = @as(f32, @floatFromInt(self.g2.y - self.g1.y)) + 1;
-        return @as(i32, @intFromFloat(@ceil(@sqrt(a * a + b * b) + 1)));
+        return self.g2.x - self.g1.x +
+            self.g2.y - self.g1.y;
     }
 };
 const Map = struct {

@@ -119,7 +119,10 @@ test "tree" {
     try testing.expectEqual(t.followSteps("CCC", "RL"), 2);
 }
 
-pub fn day8() void {}
+pub fn day(writer: anytype, alloc: Allocator) !void {
+    _ = alloc;
+    _ = writer;
+}
 
 test "example 1" {
     const INPUT1 =

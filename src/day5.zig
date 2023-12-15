@@ -87,7 +87,7 @@
 const std = @import("std");
 const atoi = @import("root.zig").atoi2;
 
-pub fn day5(writer: anytype, alloc: std.mem.Allocator) !void {
+pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     _ = alloc;
     _ = writer;
 }

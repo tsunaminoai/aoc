@@ -1,7 +1,7 @@
-const std = @import("std");
-const testing = std.testing;
-
-pub const day = @import("aoc").day;
+pub const std = @import("std");
+pub const Allocator = std.mem.Allocator;
+pub const testing = std.testing;
+pub const Array = std.ArrayList;
 
 pub const atoi = stringDigitsToNumber;
 

@@ -1,3 +1,15 @@
+/// ~/c/aoc 2023• ❱ zig build -Doptimize=ReleaseFast
+/// ~/c/aoc 2023• ❱ time ./zig-out/bin/day15
+/// Day 15
+/// ------
+/// Result1: 517965
+/// Result2: 267372
+///
+/// ________________________________________________________
+/// Executed in    8.14 millis    fish           external
+///    usr time    1.26 millis   51.00 micros    1.21 millis
+///    sys time    2.44 millis  757.00 micros    1.68 millis
+///
 const std = @import("std");
 const atoi = @import("root.zig").atoi2;
 pub const Allocator = std.mem.Allocator;
@@ -75,13 +87,13 @@ const Instruction = struct {
 fn doInstruction(insString: []const u8) !void {
     const ins = try Instruction.parse(insString);
     var box = &boxes[ins.h];
-    std.debug.print("doing {any}\n", .{ins});
+    // std.debug.print("doing {any}\n", .{ins});
 
     switch (ins.op) {
         .remove => {
             for (box.items, 0..) |l, i| {
                 if (std.mem.eql(u8, ins.label, l.label)) {
-                    std.debug.print("removing {any}", .{l});
+                    // std.debug.print("removing {any}", .{l});
                     _ = box.orderedRemove(i);
                 }
             }
@@ -90,7 +102,7 @@ fn doInstruction(insString: []const u8) !void {
             var found: usize = 0;
             for (box.items) |*l| {
                 if (std.mem.eql(u8, ins.label, l.label)) {
-                    std.debug.print("found a lens {}\n", .{l.h});
+                    // std.debug.print("found a lens {}\n", .{l.h});
                     l.lens = ins.lens;
                     found += 1;
                 }
@@ -137,9 +149,9 @@ test "inst" {
     try initBoxes(testing.allocator);
     defer deinitBoxes(testing.allocator);
 
-    // std.debug.print("{any}\n", .{try Instruction.parse("rn=1")});
+    // // std.debug.print("{any}\n", .{try Instruction.parse("rn=1")});
     try doInstruction("rn=1");
-    std.debug.print("{s}\n", .{boxes[0].items[0].label});
+    // std.debug.print("{s}\n", .{boxes[0].items[0].label});
     try testing.expectEqualDeep(boxes[0].items[0].label, "rn");
     try doInstruction("cm-");
     try testing.expectEqualDeep(boxes[0].items[0].label, "rn");

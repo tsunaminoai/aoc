@@ -10,6 +10,17 @@
 ///    usr time    1.26 millis   51.00 micros    1.21 millis
 ///    sys time    2.44 millis  757.00 micros    1.68 millis
 ///
+/// rust:
+/// ________________________________________________________
+/// Executed in  490.72 millis    fish           external
+///    usr time   83.13 millis    0.21 millis   82.92 millis
+///    sys time   41.32 millis    1.61 millis   39.70 millis
+///
+/// python:
+/// ________________________________________________________
+/// Executed in    1.08 secs      fish           external
+///    usr time  301.94 millis    0.18 millis  301.76 millis
+///    sys time   99.15 millis    1.45 millis   97.70 millis
 const std = @import("std");
 const atoi = @import("root.zig").atoi2;
 pub const Allocator = std.mem.Allocator;

@@ -1,9 +1,10 @@
 /// ~/c/aoc 2023• ❱ zig build -Doptimize=ReleaseFast
 /// ~/c/aoc 2023• ❱ time ./zig-out/bin/day15
-/// Day 15
+/// Day day15
 /// ------
 /// Result1: 517965
 /// Result2: 267372
+/// Took: 954000ns
 ///
 /// ________________________________________________________
 /// Executed in    8.14 millis    fish           external

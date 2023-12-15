@@ -11,6 +11,7 @@
 const std = @import("std");
 const atoi = @import("root.zig").stringDigitsToNumber;
 
+/// day 2
 pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     const limits = CubeCounts{ .blue = 14, .red = 12, .green = 13 };
 

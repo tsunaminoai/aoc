@@ -1,106 +1,106 @@
 const std = @import("std");
 
-pub const days = &[_][]const u8{
-    "1", "2", "3", "4", "5", "6", "7",
-    "8",  "9", "10", //"11", "13",
-    "15",
-};
+const skip = &[_]u8{ 11, 12, 13, 14 };
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
+    const timing_cmd = b.option(bool, "timing", "Add timing logic to runs") orelse false;
+
     const target = b.standardTargetOptions(.{});
 
     const optimize = b.standardOptimizeOption(.{});
 
-    const test_step = b.step("test", "Run tests");
-    const documentation = b.option(bool, "docs", "Generate documentation") orelse false;
-    const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
+    const exe_targets = b.step("exe_targets", "Build executables for each day");
+    const docs = b.step("docs", "Build documentation");
+    const timing_opt = b.addOptions();
+    timing_opt.addOption(bool, "timing", timing_cmd);
 
-    inline for (days) |day| {
+    var day: u8 = 1;
+    while (day <= 15) : (day += 1) {
+        if (std.mem.indexOf(u8, skip, &[_]u8{day}) != null)
+            continue;
+        var buf: [10]u8 = undefined;
+
+        const day_str = try std.fmt.bufPrint(&buf, "day{d}", .{day});
+
+        const src_file = try std.mem.concat(b.allocator, u8, &.{
+            day_str,
+            ".zig",
+        });
+        const src_path = .{
+            .path = try std.mem.concat(b.allocator, u8, &.{
+                "src/",
+                src_file,
+            }),
+        };
+        const dayopt = b.addOptions();
+        dayopt.addOption([]const u8, "DAY", day_str);
+
         const exe = b.addExecutable(.{
-            .name = "day" ++ day,
+            .name = day_str,
             .root_source_file = .{ .path = "src/main.zig" },
             .target = target,
             .optimize = optimize,
+            .single_threaded = true,
         });
         const day_module = b.addModule("day", .{
-            .source_file = .{ .path = "src/day" ++ day ++ ".zig" },
+            .source_file = src_path,
         });
+        const day_lib = b.addStaticLibrary(.{
+            .name = day_str,
+            .root_source_file = src_path,
+            .target = target,
+            .optimize = optimize,
+            .single_threaded = true,
+        });
+        exe.linkLibrary(day_lib);
         exe.addModule("day", day_module);
-
-        const dayopt = b.addOptions();
-        dayopt.addOption([]const u8, "DAY", day);
-        dayopt.addOption([days.len][]const u8, "DAYS", days.*);
         exe.addOptions("config", dayopt);
-
+        exe.addOptions("timing", timing_opt);
         b.installArtifact(exe);
 
+        exe_targets.dependOn(&exe.step);
+
         const run_cmd = b.addRunArtifact(exe);
-        run_cmd.step.dependOn(b.getInstallStep());
-        const run_step = b.step("day" ++ day, "Run day " ++ day ++ "'s file");
+
+        const test_step = b.addTest(.{
+            .name = day_str,
+            .root_source_file = src_path,
+            .target = target,
+            .optimize = optimize,
+        });
+        exe_targets.dependOn(&test_step.step);
+
+        const run_name = try std.mem.concat(b.allocator, u8, &.{
+            "run_",
+            day_str,
+        });
+        const run_desc = try std.mem.concat(b.allocator, u8, &.{
+            "Run ",
+            day_str,
+        });
+        const run_step = b.step(run_name, run_desc);
         run_step.dependOn(&run_cmd.step);
 
-        const test_module = b.fmt("src/day{s}.zig", .{day});
-        var exe_tests = b.addTest(.{
-            .root_source_file = .{ .path = test_module },
+        const docs_dir = try std.mem.concat(b.allocator, u8, &.{
+            "docs/",
+            day_str,
         });
-        test_step.dependOn(&exe_tests.step);
+        const docs_install = b.addInstallDirectory(.{
+            .install_dir = .prefix,
+            .install_subdir = docs_dir,
+            .source_dir = day_lib.getEmittedDocs(),
+        });
 
-        if (documentation) {
-            const install_docs = b.addInstallDirectory(.{
-                .source_dir = exe.getEmittedDocs(),
-                .install_dir = .prefix,
-                .install_subdir = "docs" ++ day,
-            });
-
-            docs_step.dependOn(&install_docs.step);
-        }
+        docs.dependOn(&docs_install.step);
     }
 
-    // // This *creates* a Run step in the build graph, to be executed when another
-    // // step is evaluated that depends on it. The next line below will establish
-    // // such a dependency.
-    // const run_cmd = b.addRunArtifact(exe);
+    const test_all = b.step("test_all", "Run all tests");
+    test_all.dependOn(exe_targets);
 
-    // // By making the run step depend on the install step, it will be run from the
-    // // installation directory rather than directly from within the cache directory.
-    // // This is not necessary, however, if the application depends on other installed
-    // // files, this ensures they will be present and in the expected location.
-    // run_cmd.step.dependOn(b.getInstallStep());
+    const run_all = b.step("run_all", "Run all days");
+    run_all.dependOn(exe_targets);
 
-    // // This allows the user to pass arguments to the application in the build
-    // // command itself, like this: `zig build run -- arg1 arg2 etc`
-    // if (b.args) |args| {
-    //     run_cmd.addArgs(args);
-    // }
-
-    // // This creates a build step. It will be visible in the `zig build --help` menu,
-    // // and can be selected like this: `zig build run`
-    // // This will evaluate the `run` step rather than the default, which is "install".
-    // const run_step = b.step("run", "Run the app");
-    // run_step.dependOn(&run_cmd.step);
-
-    // // Creates a step for unit testing. This only builds the test executable
-    // // but does not run it.
-    // const lib_unit_tests = b.addTest(.{
-    //     .root_source_file = .{ .path = "src/root.zig" },
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
-
-    // const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
-
-    // const exe_unit_tests = b.addTest(.{
-    //     .root_source_file = .{ .path = "src/main.zig" },
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
-
-    // const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
-
-    // // Similar to creating the run step earlier, this exposes a `test` step to
-    // // the `zig build --help` menu, providing a way for the user to request
-    // // running the unit tests.
-    // const test_step = b.step("test", "Run unit tests");
-    // test_step.dependOn(&run_lib_unit_tests.step);
-    // test_step.dependOn(&run_exe_unit_tests.step);
+    const clean = b.step("clean", "Remove the zig local directories");
+    clean.dependOn(&b.addRemoveDirTree("zig-out").step);
+    clean.dependOn(&b.addRemoveDirTree("zig-cache").step);
 }

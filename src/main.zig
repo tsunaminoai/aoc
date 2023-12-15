@@ -1,11 +1,15 @@
 const std = @import("std");
 const aoc = @import("day");
 const config = @import("config");
+const timing = @import("timing");
+const time = std.time;
+
+var startTime: i128 = 0;
 
 pub fn main() !void {
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
+    if (timing.timing) {
+        startTime = time.nanoTimestamp();
+    }
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
@@ -20,4 +24,9 @@ pub fn main() !void {
     try aoc.day(stdout, arena.allocator());
 
     try bw.flush();
+
+    if (timing.timing) {
+        const stop = time.nanoTimestamp();
+        std.debug.print("Took: {}ns\n", .{stop - startTime});
+    }
 }

@@ -61,7 +61,7 @@ pub fn stringDigitsToNumber(input: []const u8) !u32 {
     }
     return ret;
 }
-
+/// day 1
 pub fn day(writer: anytype, alloc: std.mem.Allocator) !void {
     var input = try std.fs.cwd().openFile("inputs/day1.txt", .{});
     defer input.close();

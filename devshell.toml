@@ -1,5 +1,5 @@
 [devshell]
-name = "Game Dev Environment"
+name = "Advent of Code 2023"
 packages = ["zig-shell-completions", "direnv", "gh"]
 packagesFrom = ["direnv"]
 
@@ -20,6 +20,9 @@ command = "zig build test"
 
 [[commands]]
 package = "nixpkgs-fmt"
+category = "formatters"
+[[commands]]
+package = "alejandra"
 category = "formatters"
 
 [[commands]]

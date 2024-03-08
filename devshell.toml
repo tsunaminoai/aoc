@@ -1,0 +1,29 @@
+[devshell]
+name = "Game Dev Environment"
+packages = ["zig-shell-completions", "direnv", "gh"]
+packagesFrom = ["direnv"]
+
+[[commands]]
+help = "builds the project"
+name = "zb"
+command = "zig build"
+
+[[commands]]
+help = "run the project"
+name = "zr"
+command = "zig build run"
+
+[[commands]]
+help = "test the project"
+name = "zt"
+command = "zig build test"
+
+[[commands]]
+package = "nixpkgs-fmt"
+category = "formatters"
+
+[[commands]]
+help = "github utility"
+name = "gh"
+package = "gh"
+category = "utilites"

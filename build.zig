@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const skip = &[_]u8{ 11, 12, 13, 14 };
+const skip = &[_]u8{ 11, 12, 13, 14, 15, 16, 17 };
 
 pub fn build(b: *std.Build) !void {
     const timing_cmd = b.option(bool, "timing", "Add timing logic to runs") orelse false;
@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) !void {
     timing_opt.addOption(bool, "timing", timing_cmd);
 
     var day: u8 = 1;
-    while (day <= 15) : (day += 1) {
+    while (day <= 18) : (day += 1) {
         if (std.mem.indexOf(u8, skip, &[_]u8{day}) != null)
             continue;
         var buf: [10]u8 = undefined;

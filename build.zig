@@ -42,9 +42,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
             .single_threaded = true,
         });
-        const day_module = b.addModule("day", .{
-            .source_file = src_path,
-        });
+
         const day_lib = b.addStaticLibrary(.{
             .name = day_str,
             .root_source_file = src_path,
@@ -53,9 +51,13 @@ pub fn build(b: *std.Build) !void {
             .single_threaded = true,
         });
         exe.linkLibrary(day_lib);
-        exe.addModule("day", day_module);
-        exe.addOptions("config", dayopt);
-        exe.addOptions("timing", timing_opt);
+        exe.root_module.addAnonymousImport("day", .{
+            .optimize = optimize,
+            .target = target,
+            .root_source_file = src_path,
+        });
+        exe.root_module.addOptions("config", dayopt);
+        exe.root_module.addOptions("timing", timing_opt);
         b.installArtifact(exe);
 
         exe_targets.dependOn(&exe.step);

@@ -9,9 +9,9 @@ name = "zb"
 command = "zig build"
 
 [[commands]]
-help = "run the project"
+help = "run day X of the advent of code"
 name = "zr"
-command = "zig build run"
+command = "zig build run_day$1"
 
 [[commands]]
 help = "test the project"

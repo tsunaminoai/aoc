@@ -1,4 +1,6 @@
-# Advend of Code 2023
+# Advent of Code 2023
+
+[Advent of Code 2023](https://adventofcode.com/2023)
 
 And yet I'm writing the readme in 2024/03, so sue me.
 
